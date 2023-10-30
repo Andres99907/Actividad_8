@@ -23,6 +23,5 @@ Route::delete('/courses/{ID}', 'App\Http\Controllers\CoursesController@destroy')
 Route::put('courses/{course}', 'App\Http\Controllers\CoursesController@update')->name('courses.update');
 
 Route::get('/', function () {
-    redirect('/courses');
-    return view('welcome');
+    return view('courses');
 });
