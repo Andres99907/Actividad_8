@@ -5,12 +5,14 @@
     <form method="POST" action="{{ route('courses.store') }}">
         @csrf
         <label for="Name">Nombre del Curso:</label>
+        <br>
         <input type="text" name="Name" required>
         <br>
         <label for="Asistentes">Número de Asistentes:</label>
+        <br>
         <input type="number" name="Asistentes" required>
         <br>
-        <button type="submit">Guardar Curso</button>
+        <br>
+        <button class="btn btn-primary" type="submit">Guardar Curso</button>
     </form>
-    <a href="{{ route('courses.index') }}">Volver a la lista de cursos</a>
 @endsection
