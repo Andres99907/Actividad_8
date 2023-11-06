@@ -86,4 +86,20 @@ class CoursesController extends Controller
     // Redirige a la vista de detalle del curso o a donde desees
     return redirect("/courses");
     } 
+
+    public function guardarImagen(Request $request, $id)
+    {
+        if ($request->hasFile('imagen')) {
+            $imagen = $request->file('imagen');
+            $imagenData = file_get_contents($imagen->getRealPath());
+
+            DB::table('courses')->where('id', $id)->update([
+                'IMAGEN' => $imagenData
+            ]);
+
+            return 'Imagen subida exitosamente';
+        } else {
+            return 'No se ha seleccionado ninguna imagen';
+        }
+    }
 }
