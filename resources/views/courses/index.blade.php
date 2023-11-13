@@ -5,13 +5,9 @@
     <ul>
         @foreach ($courses as $course)
             <li><a href="{{ route('courses.show', $course->ID) }}">{{ $course->Name }}</a><p>Asistentes: {{ $course->Asistentes }}</p></li>
-            <form action="/courses.iupdate/{{ $id }}" method="POST" enctype="multipart/form-data">
-            @method('PUT')
-            @csrf
-            <input type="file" name="imagen">
-            <button class="btn btn-primary" type="submit">Subir imagen</button>
-            </form>
-
+            @if ($course->Image) <!-- Asegúrate de que existe una imagen -->
+            <img src="data:image/jpg;base64,{{ base64_encode($course->Image) }}" alt="Imagen del Curso" style="width: 100px; height: 100px;">
+        @endif
         @endforeach
     </ul>
 @endsection

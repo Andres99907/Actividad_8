@@ -71,10 +71,20 @@ class CoursesController extends Controller
     $request->validate([
         'Name' => 'required|string',
         'Asistentes' => 'required|integer',
+        'imagen' => 'image', // Opcional
     ]);
 
-    DB::update('UPDATE courses SET Name = ?, Asistentes = ? WHERE ID = ?', [$request->input('Name'), $request->input('Asistentes'), $id]);
+    // Procesar la imagen si está presente
+    if ($request->hasFile('imagen')) {
+        $imagen = $request->file('imagen');
+        $imagenBinaria = file_get_contents($imagen);
 
+        // Asegúrate de que tu columna pueda almacenar el BLOB
+        DB::update('UPDATE courses SET Image = ? WHERE ID = ?', [$imagenBinaria, $id]);
+    }
+
+    // Actualizar otros campos
+    DB::update('UPDATE courses SET Name = ?, Asistentes = ? WHERE ID = ?', [$request->input('Name'), $request->input('Asistentes'), $id]);
     // Actualiza los campos Name y Asistentes con los datos del formulario
     
     // También esto dejó de jalar :(, ni actualiza nada.
