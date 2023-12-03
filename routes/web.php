@@ -21,7 +21,6 @@ Route::post('/courses', 'App\Http\Controllers\CoursesController@store')->name('c
 Route::get('/courses/{course}', 'App\Http\Controllers\CoursesController@show')->name('courses.show');
 Route::delete('/courses/{ID}', 'App\Http\Controllers\CoursesController@destroy')->name('courses.destroy');
 Route::put('courses/{course}', 'App\Http\Controllers\CoursesController@update')->name('courses.update');
-Route::put('/courses/{id}', 'App\Http\Controllers\CoursesController@uimage')->name('courses.iupdate');
 Route::get('/', function () {
     return redirect('courses');
 });

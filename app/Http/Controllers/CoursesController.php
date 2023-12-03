@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Models\Courses;
 
@@ -30,17 +31,60 @@ class CoursesController extends Controller
     {
         // Validación de datos (puedes personalizar según tus necesidades)
 
-        $request->validate([
-            'Name' => 'required',
-            'Asistentes' => 'required|numeric',
-        ]);
+        $reglas = [
+            'Name' => 'required|string|min:5',
+            'Asistentes' => 'required|integer|min:1',
+            'imagen' => 'required|image|mimes:jpeg|max:500',
+        ];
 
-        // Crear un nuevo curso en la base de datos
+        // Mensajes de error
 
-        Courses::create([
-            'Name' => $request->input('Name'),
-            'Asistentes' => $request->input('Asistentes'),
-        ]);
+    $mensajes = [
+        'Name.required' => 'El de nombre es obligatorio.',
+        'Name.min' => 'El campo de nombre debe tener al menos :min caracteres.',
+        'Asistentes.required' => 'El número de asistentes es obligatorio',
+        'Asistentes.min' => 'Debe haber al menos un asistente',
+        'imagen.required' => 'Debes de seleccionar una imagen',
+        'imagen.mimes' => 'La imagen debe ser de tipo JPEG.',
+        'imagen.max' => 'La imagen no debe ser mayor de 500 KB.',
+    ];
+
+    // Si falla entonces devuelve un error
+
+    $validator = Validator::make($request->all(), $reglas, $mensajes);
+
+    if ($validator->fails()) {
+        // Si la validación falla, redirige de nuevo al formulario con los errores
+        return redirect()->back()->withErrors($validator)->withInput();
+    }
+
+    // Crear un nuevo curso en la base de datos
+
+    $nuevoCurso = Courses::create([
+        'Name' => $request->input('Name'),
+        'Asistentes' => $request->input('Asistentes'),
+    ]);
+
+    $imagen = $request->file('imagen');
+
+    // Verifica el tamaño antes de almacenarla en la base de datos
+    if ($imagen->getSize() > 500 * 1024) {
+        // Si la imagen es mayor a 500 KB, devuelve un mensaje de error
+        return redirect()->back()->withErrors(['imagen' => 'La imagen no debe ser mayor de 500 kb.'])->withInput();
+    }
+
+    $imagenBinaria = file_get_contents($imagen);
+    
+
+    try{
+        DB::update('UPDATE courses SET Image = ? WHERE ID = ?', [$imagenBinaria, $nuevoCurso->id]);
+    } 
+    catch (\Exception $e) {
+    // Maneja la excepción aquí
+    return redirect()->back()->withErrors(['imagen' => 'El curso fue creado, sin embargo no se pudo subir la imagen.'])->withInput();
+    }
+
+        
 
         // Redirigir a la lista de cursos o a donde desees
 
@@ -68,48 +112,57 @@ class CoursesController extends Controller
     public function update(Request $request, $id)
 {
     // Valida los datos enviados por el formulario
-    $request->validate([
-        'Name' => 'required|string',
-        'Asistentes' => 'required|integer',
-        'imagen' => 'image', // Opcional
-    ]);
+    $reglas = [
+        'Name' => 'required|string|min:5',
+        'Asistentes' => 'required|integer|min:1',
+        'imagen' => 'required|image|mimes:jpeg|max:500',
+    ];
 
-    // Procesar la imagen si está presente
-    if ($request->hasFile('imagen')) {
-        $imagen = $request->file('imagen');
-        $imagenBinaria = file_get_contents($imagen);
+    // Mensajes de error
 
-        // Asegúrate de que tu columna pueda almacenar el BLOB
-        DB::update('UPDATE courses SET Image = ? WHERE ID = ?', [$imagenBinaria, $id]);
+    $mensajes = [
+        'Name.required' => 'El de nombre es obligatorio.',
+        'Name.min' => 'El campo de nombre debe tener al menos :min caracteres.',
+        'Asistentes.required' => 'El número de asistentes es obligatorio',
+        'Asistentes.min' => 'Debe haber al menos un asistente',
+        'imagen.required' => 'Debes de seleccionar una imagen',
+        'imagen.mimes' => 'La imagen debe ser de tipo JPEG.',
+        'imagen.max' => 'La imagen no debe ser mayor de 500 KB.',
+    ];
+
+    // Si falla entonces devuelve un error
+
+    $validator = Validator::make($request->all(), $reglas, $mensajes);
+
+    if ($validator->fails()) {
+        // Si la validación falla, redirige de nuevo al formulario con los errores
+        return redirect()->back()->withErrors($validator)->withInput();
     }
 
-    // Actualizar otros campos
-    DB::update('UPDATE courses SET Name = ?, Asistentes = ? WHERE ID = ?', [$request->input('Name'), $request->input('Asistentes'), $id]);
-    // Actualiza los campos Name y Asistentes con los datos del formulario
-    
-    // También esto dejó de jalar :(, ni actualiza nada.
-    //$course->update([
-    //    'Name' => $request->input('Name'),
-    //    'Asistentes' => $request->input('Asistentes'),
-    //]);
+    $imagen = $request->file('imagen');
 
-    // Redirige a la vista de detalle del curso o a donde desees
-    return redirect("/courses");
+    // Verifica el tamaño antes de almacenarla en la base de datos
+    if ($imagen->getSize() > 500 * 1024) {
+        // Si la imagen es mayor a 500 KB, devuelve un mensaje de error
+        return redirect()->back()->withErrors(['imagen' => 'La imagen no debe ser mayor de 500 kb.'])->withInput();
+    }
+
+
+    $imagenBinaria = file_get_contents($imagen);
+
+    // Asegúrate de que tu columna pueda almacenar el BLOB
+    try{
+    DB::update('UPDATE courses SET Image = ? WHERE ID = ?', [$imagenBinaria, $id]);
     } 
-
-    public function guardarImagen(Request $request, $id)
-    {
-        if ($request->hasFile('imagen')) {
-            $imagen = $request->file('imagen');
-            $imagenData = file_get_contents($imagen->getRealPath());
-
-            DB::table('courses')->where('id', $id)->update([
-                'IMAGEN' => $imagenData
-            ]);
-
-            return 'Imagen subida exitosamente';
-        } else {
-            return 'No se ha seleccionado ninguna imagen';
-        }
+    catch (\Exception $e) {
+    // Maneja la excepción aquí
+    return redirect()->back()->withErrors(['imagen' => 'Ha ocurrido un error al subir la imagen, intenta seleccionar una diferente'])->withInput();
     }
+    // Actualizar otros campos
+
+    DB::update('UPDATE courses SET Name = ?, Asistentes = ? WHERE ID = ?', [$request->input('Name'), $request->input('Asistentes'), $id]);
+
+    return redirect("/courses");
+
+    } 
 }
